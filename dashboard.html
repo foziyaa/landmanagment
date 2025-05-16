@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard | Sheger LMS</title>
+
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Font Awesome for user icon -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
+
+  <!-- Custom Styles -->
+  <link href="css/styles.css" rel="stylesheet" />
+</head>
+<body>
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="logo">
+      <img src="/assets/LMSLOGO.png" alt="Sheger LMS Logo" />
+      <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
+    </div>
+    <nav>
+      <a href="#" onclick="loadContent('partials/dashboard.html')"><i>🏠</i> Dashboard</a>
+      <a href="#" onclick="loadContent('register.html')"><i>📦</i> Register Parcel</a>
+      <a href="#" onclick="loadContent('parcels.html')"><i>📋</i> View Parcels</a>
+      <a href="#" onclick="loadContent('certificate.html')"><i>📄</i> Export Certificate</a>
+      <a href="#" onclick="logout()"><i>🚪</i> Logout</a>
+    </nav>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main">
+    <header class="header">
+      <h5>Sheger Land Management System</h5>
+      <div class="user-info">
+        <i class="fas fa-user-circle"></i>
+        
+        <small id="roleInfo" class="role-label"></small>
+        <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
+      </div>
+    </header>
+
+    <section class="content" id="mainContent">
+      <div class="dashboard-card">
+        <h3>Dashboard Overview</h3>
+        <p>Welcome to the dashboard. Select a menu item from the sidebar to begin.</p>
+      </div>
+    </section>
+
+    <footer class="footer">
+      © 2025 Sheger City Land Management System. All rights reserved.
+    </footer>
+  </main>
+
+  <!-- Scripts -->
+  <script>
+    // Set role from localStorage
+    document.getElementById('roleInfo').textContent =
+      ' ' + (localStorage.getItem('role') || 'Guest');
+
+    // Toggle Sidebar
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('collapsed');
+    }
+
+    // Toggle Theme
+    function toggleTheme() {
+      const currentTheme = document.documentElement.getAttribute('data-theme');
+      document.documentElement.setAttribute('data-theme', currentTheme === 'dark' ? 'light' : 'dark');
+    }
+
+    // Logout
+    function logout() {
+      localStorage.removeItem('role');
+      window.location.href = 'index.html';
+    }
+
+    // Dynamic Content Loader
+    function loadContent(page) {
+      fetch(page)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(html, 'text/html');
+          const content = doc.querySelector('.content') || doc.body;
+          document.getElementById('mainContent').innerHTML = content.innerHTML;
+        })
+        .catch(() => {
+          document.getElementById('mainContent').innerHTML =
+            '<p class="text-danger">Failed to load content.</p>';
+        });
+    }
+  </script>
+
+  <!-- Bootstrap Bundle -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
