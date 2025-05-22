@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Generate Ownership Certificate</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <style>
+    .certificate {
+      border: 2px solid #333;
+      padding: 30px;
+      margin-top: 20px;
+      background-color: #fff;
+    }
+    .certificate h3 {
+      text-align: center;
+      margin-bottom: 20px;
+      text-decoration: underline;
+    }
+    #certificateArea {
+      display: none;
+    }
+  </style>
+</head>
+<body class="bg-light">
+  <div class="container py-4">
+    <h2 class="mb-4">Generate Land Ownership Certificate</h2>
+
+    <!-- Select parcel -->
+    <div class="mb-3">
+      <label for="parcelSelect" class="form-label">Select Parcel:</label>
+      <select id="parcelSelect" class="form-select">
+        <option value="">-- Choose a parcel --</option>
+      </select>
+    </div>
+
+    <!-- Certificate Preview -->
+    <div id="certificateArea" class="certificate">
+      <h3>Land Ownership Certificate</h3>
+      <p><strong>Parcel Code:</strong> <span id="certCode"></span></p>
+      <p><strong>Owner Name:</strong> <span id="certOwner"></span></p>
+      <p><strong>Region:</strong> <span id="certRegion"></span></p>
+      <p><strong>Sub-City:</strong> <span id="certSubcity"></span></p>
+      <p><strong>Kebele:</strong> <span id="certKebele"></span></p>
+      <p><strong>Size:</strong> <span id="certSize"></span> m²</p>
+      <p><strong>Date Issued:</strong> <span id="certDate"></span></p>
+      <br>
+      <p>Certified by the Land Administration Office of Sheger City.</p>
+    </div>
+
+    <!-- Export button -->
+    <button id="exportBtn" class="btn btn-primary mt-3" style="display: none;">Export as PDF</button>
+  </div>
+
+  <!-- Libraries -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+  <!-- Script -->
+  <script>
+    const parcelSelect = document.getElementById('parcelSelect');
+    const certArea = document.getElementById('certificateArea');
+    const exportBtn = document.getElementById('exportBtn');
+
+    const parcels = JSON.parse(localStorage.getItem('parcels')) || [];
+
+    // Populate dropdown
+    parcels.forEach((p, i) => {
+      const option = document.createElement('option');
+      option.value = i;
+      option.text = `${p.parcelCode} - ${p.ownerName}`;
+      parcelSelect.appendChild(option);
+    });
+
+    parcelSelect.addEventListener('change', function () {
+      const selectedIndex = this.value;
+      if (selectedIndex === '') {
+        certArea.style.display = 'none';
+        exportBtn.style.display = 'none';
+        return;
+      }
+
+      const p = parcels[selectedIndex];
+      document.getElementById('certCode').textContent = p.parcelCode;
+      document.getElementById('certOwner').textContent = p.ownerName;
+      document.getElementById('certRegion').textContent = p.region;
+      document.getElementById('certSubcity').textContent = p.subcity;
+      document.getElementById('certKebele').textContent = p.kebele;
+      document.getElementById('certSize').textContent = p.size;
+      document.getElementById('certDate').textContent = new Date().toLocaleDateString();
+
+      certArea.style.display = 'block';
+      exportBtn.style.display = 'inline-block';
+    });
+
+    exportBtn.addEventListener('click', function () {
+      html2pdf().from(certArea).save('ownership-certificate.pdf');
+    });
+  </script>
+</body>
+</html>

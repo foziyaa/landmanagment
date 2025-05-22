@@ -16,19 +16,32 @@
 
   <!-- Custom Styles -->
   <link href="css/styles.css" rel="stylesheet" />
-</head>
+
+  <!-- Google Maps API -->
+  <script>
+    function initMap() {
+      // Your existing map initialization code
+      const parcels = JSON.parse(localStorage.getItem('parcels')) || [];
+      const map = new google.maps.Map(document.getElementById('parcelMap'), {
+        zoom: 12,
+        center: { lat: 8.9806, lng: 38.7578 }
+      });
+      // Rest of your map code...
+    }
+  </script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAd90hgfpDkHIv1Rie248CxW43pOD5BkZc&loading=async&callback=initMap" async defer></script></head>
 <body>
   <!-- Sidebar -->
   <aside class="sidebar" id="sidebar">
     <div class="logo">
-      <img src="/assets/LMSLOGO.png" alt="Sheger LMS Logo" />
+      <img src="assets/LMSLOGO.png" alt="Sheger LMS Logo" />
       <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
     </div>
     <nav>
-      <a href="#" onclick="loadContent('partials/dashboard.html')"><i>🏠</i> Dashboard</a>
-      <a href="#" onclick="loadContent('register.html')"><i>📦</i> Register Parcel</a>
-      <a href="#" onclick="loadContent('parcels.html')"><i>📋</i> View Parcels</a>
-      <a href="#" onclick="loadContent('certificate.html')"><i>📄</i> Export Certificate</a>
+      <a href="#" data-feature="dashboard" onclick="loadContent('dashboard.html')"><i>🏠</i> Dashboard</a>
+      <a href="#" data-feature="register-parcels" onclick="loadContent('register.html')"><i>📦</i> Register Parcel</a>
+      <a href="#" data-feature="view-parcels" onclick="loadContent('parcels.html')"><i>📋</i> View Parcels</a>
+      <a href="#" data-feature="export-certificates" onclick="loadContent('certificate.html')"><i>📄</i> Export Certificate</a>
       <a href="#" onclick="logout()"><i>🚪</i> Logout</a>
     </nav>
   </aside>
@@ -39,17 +52,16 @@
       <h5>Sheger Land Management System</h5>
       <div class="user-info">
         <i class="fas fa-user-circle"></i>
-        
         <small id="roleInfo" class="role-label"></small>
         <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
       </div>
     </header>
 
     <section class="content" id="mainContent">
-      <div class="dashboard-card">
-        <h3>Dashboard Overview</h3>
-        <p>Welcome to the dashboard. Select a menu item from the sidebar to begin.</p>
-      </div>
+      
+
+      <!-- Google Map -->
+      <div id="parcelMap" style="height: 500px; width: 100%; border-radius: 10px; margin-top: 20px;"></div>
     </section>
 
     <footer class="footer">
@@ -59,28 +71,50 @@
 
   <!-- Scripts -->
   <script>
-    // Set role from localStorage
-    document.getElementById('roleInfo').textContent =
-      ' ' + (localStorage.getItem('role') || 'Guest');
+    const rolePermissions = {
+      systemadmin: ['dashboard', 'user-management', 'logs', 'backup'],
+      landadmin: ['dashboard', 'manage-parcels', 'generate-certificates', 'transactions', 'inspections'],
+      registrationofficer: ['dashboard', 'register-users', 'register-parcels', 'view-parcels', 'data-entry'],
+      regulatory: ['dashboard', 'review-records', 'audits', 'enforce-regulations'],
+      user: ['dashboard', 'search-records', 'request-services', 'export-certificates']
+    };
 
-    // Toggle Sidebar
+    const role = localStorage.getItem('role');
+
+    if (!role) {
+      alert('Please login first.');
+      window.location.href = 'index.html';
+    }
+
+    document.getElementById('roleInfo').textContent = ' ' + role;
+    const allowedFeatures = rolePermissions[role] || [];
+
+    document.querySelectorAll('nav a[data-feature]').forEach(link => {
+      const feature = link.getAttribute('data-feature');
+      if (!allowedFeatures.includes(feature)) {
+        link.style.display = 'none';
+      }
+    });
+
+    if (!allowedFeatures.includes('dashboard')) {
+      alert('Access denied.');
+      window.location.href = 'index.html';
+    }
+
     function toggleSidebar() {
       document.getElementById('sidebar').classList.toggle('collapsed');
     }
 
-    // Toggle Theme
     function toggleTheme() {
       const currentTheme = document.documentElement.getAttribute('data-theme');
       document.documentElement.setAttribute('data-theme', currentTheme === 'dark' ? 'light' : 'dark');
     }
 
-    // Logout
     function logout() {
       localStorage.removeItem('role');
       window.location.href = 'index.html';
     }
 
-    // Dynamic Content Loader
     function loadContent(page) {
       fetch(page)
         .then(res => res.text())
@@ -89,12 +123,53 @@
           const doc = parser.parseFromString(html, 'text/html');
           const content = doc.querySelector('.content') || doc.body;
           document.getElementById('mainContent').innerHTML = content.innerHTML;
+          
+          // If dashboard is loaded, show the map again
+          if (page === 'dashboard.html' || page === '#') {
+            document.getElementById('mainContent').innerHTML = `
+              <div id="parcelMap" style="height: 500px; width: 100%; border-radius: 10px; margin-top: 20px;"></div>
+            `;
+            initParcelMap();
+          }
         })
         .catch(() => {
           document.getElementById('mainContent').innerHTML =
             '<p class="text-danger">Failed to load content.</p>';
         });
     }
+
+    function initParcelMap() {
+      const parcels = JSON.parse(localStorage.getItem('parcels')) || [];
+
+      const map = new google.maps.Map(document.getElementById('parcelMap'), {
+        zoom: 12,
+        center: { lat: 8.9806, lng: 38.7578 }
+      });
+
+      parcels.forEach(parcel => {
+        if (parcel.lat && parcel.lng) {
+          const marker = new google.maps.Marker({
+            position: { lat: parseFloat(parcel.lat), lng: parseFloat(parcel.lng) },
+            map: map,
+            title: `${parcel.parcelCode} - ${parcel.ownerName || 'Unassigned'}`
+          });
+
+          const infoWindow = new google.maps.InfoWindow({
+            content: `<strong>${parcel.parcelCode}</strong><br>Owner: ${parcel.ownerName || 'Unassigned'}<br>Size: ${parcel.size} m²`
+          });
+
+          marker.addListener('click', () => {
+            infoWindow.open(map, marker);
+          });
+        }
+      });
+    }
+
+    window.addEventListener('load', () => {
+      if (document.getElementById('parcelMap')) {
+        initParcelMap();
+      }
+    });
   </script>
 
   <!-- Bootstrap Bundle -->

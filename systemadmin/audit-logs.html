@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Audit Logs</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+</head>
+<body class="p-4">
+  <div class="container">
+    <h2 class="mb-4">System Audit Logs</h2>
+
+    <div class="card">
+      <div class="card-header">Recent Actions</div>
+      <div class="card-body">
+        <table class="table table-bordered table-striped" id="logTable">
+          <thead>
+            <tr>
+              <th>Timestamp</th>
+              <th>User</th>
+              <th>Action</th>
+              <th>Target</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Logs will go here -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const logTable = document.querySelector('#logTable tbody');
+    let logs = JSON.parse(localStorage.getItem('auditLogs')) || [];
+
+    function renderLogs() {
+      logTable.innerHTML = '';
+      if (logs.length === 0) {
+        logTable.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No activity logged yet.</td></tr>';
+        return;
+      }
+
+      logs.forEach(log => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${log.timestamp}</td>
+          <td>${log.user}</td>
+          <td>${log.action}</td>
+          <td>${log.target}</td>
+        `;
+        logTable.appendChild(row);
+      });
+    }
+
+    renderLogs();
+  </script>
+</body>
+</html>
